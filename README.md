@@ -10,13 +10,35 @@
 - **Backend**: FastAPI with Hyperliquid SDK
 
 ## Demo
+UI
 ![UI](/demo/ui.png)
+
+Place Trade success
 ![Place Trade success](/demo/trade-success.png)
+
+Place Trade fail
 ![Place Trade fail](/demo/trade-block.png)
+
+BE Logs info when place trade success
 ![BE Logs info when place trade success](/demo/log-success.png)
 
 ## Notes / Assumptions
-- **Backend**: FastAPI with CORS for http://localhost:3000. Endpoints: `GET /`, `GET /markets` (reads `backend/app/mock-data.json`), `POST /orders/place` (mock, no persistence; leverage ≤ 3x; trades blocked within 24h of expiry).
-- **Frontend**: Fetches `http://localhost:8000/markets` via react-query, charts candidate histories (`p` as %), shows expiry countdown, and submits simple trades (UI 1–5x; backend caps to 3x).
-- **Mock Data**: `mock-data.json` contains `{ title, history: [{ t: epoch_sec, p: 0–1 }] }`.
-- **Ports/CORS**: Backend 8000, Frontend 3000; CORS allowed for 3000 in `main.py`.
+## 🖥 Backend (FastAPI)
+- Runs on **port 8000**  
+- **CORS** enabled for `http://localhost:3000` 
+- `GET /markets` → returns data from `backend/app/mock-data.json`  
+- `POST /orders/place` → mock order placement  
+  - No persistence  
+  - Leverage **capped at 3x**  
+  - Trades **blocked within 24h of expiry**  
+
+---
+
+## 💻 Frontend (React)
+- Runs on **port 3000**  
+- Fetches markets from: `http://localhost:8000/markets` (via **react-query**)  
+- Chart candidate histories (`p` values as **percentages**)  
+- Show **expiry countdown**  
+- Submit simple trades  
+  - UI allows **1–5x leverage**  
+  - Backend enforces **max 3x**  
