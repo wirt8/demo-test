@@ -6,7 +6,7 @@
 5. Run frontend: `cd frontend && npm run dev`
 
 ## Architecture
-- **Frontend**: React TypeScript with Tailwind CSS
+- **Frontend**: Next.js with Tailwind CSS
 - **Backend**: FastAPI with Hyperliquid SDK
 
 ## Demo
@@ -34,7 +34,7 @@ BE Logs info when place trade success
 
 ---
 
-## 💻 Frontend (React)
+## 💻 Frontend (Next.js)
 - Runs on **port 3000**  
 - Fetches markets from: `http://localhost:8000/markets` (via **react-query**)  
 - Chart candidate histories (`p` values as **percentages**)  
