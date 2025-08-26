@@ -2,8 +2,8 @@
 1. Clone repository
 2. Setup backend: `cd backend && pip install -r requirements.txt`
 3. Setup frontend: `cd frontend && npm install`
-4. Run backend: `uvicorn main:app --reload --port 8000`
-5. Run frontend: `npm run dev`
+4. Run backend: `cd backend && uvicorn main:app --reload --port 8000`
+5. Run frontend: `cd frontend && npm run dev`
 
 ## Architecture
 - **Frontend**: React TypeScript with Tailwind CSS
