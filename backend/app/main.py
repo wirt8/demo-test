@@ -51,8 +51,8 @@ MOCK_MARKET = ScalarMarket(
     # max_range=65.0,
     # mark_price=54.5,
     # oracle_price=54.2,
-    min_range=1,
-    max_range=4,
+    min_range=0,
+    max_range=1,
     mark_price=1,
     oracle_price=1,
     expiry = datetime(2025, 10, 10),
@@ -69,8 +69,8 @@ async def root():
 
 @app.get("/markets", response_model=list[ScalarMarket])
 async def get_markets():
-    # read mock data from file
-    with open("mock-data.json", "r") as f:
+    # Read mock data from file
+    with open("./app/mock-data.json", "r") as f:
         mock_data = json.load(f)
     MOCK_MARKET.markets = mock_data
 
@@ -112,7 +112,7 @@ async def place_order(trade: TradeRequest):
         "order_id": order_id,
         "market": market.title,
         "side": trade.side,
-        "entry_price": trade.entry_price,
+        # "entry_price": trade.entry_price,
         "size": trade.size,
         "leverage": trade.leverage,
         "notional_size": notional_size,
@@ -126,7 +126,7 @@ async def place_order(trade: TradeRequest):
     logger.info(f"Order ID: {order_id}")
     logger.info(f"Market: {market.title}")
     logger.info(f"Side: {trade.side.upper()}")
-    logger.info(f"Entry Price: {trade.entry_price}{market.unit}")
+    # logger.info(f"Entry Price: {trade.entry_price}{market.unit}")
     logger.info(f"Position Size: ${trade.size}")
     logger.info(f"Leverage: {trade.leverage}x")
     logger.info(f"Notional Size: ${notional_size}")
