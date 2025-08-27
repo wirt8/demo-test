@@ -70,7 +70,7 @@ async def root():
 @app.get("/markets", response_model=list[ScalarMarket])
 async def get_markets():
     # Read mock data from file
-    with open("./app/mock-data.json", "r") as f:
+    with open("mock-data.json", "r") as f:
         mock_data = json.load(f)
     MOCK_MARKET.markets = mock_data
 
