@@ -2,7 +2,7 @@
 1. Clone repository
 2. Setup backend: `cd backend && pip install -r requirements.txt`
 3. Setup frontend: `cd frontend && npm install`
-4. Run backend: `cd backend && uvicorn main:app --reload --port 8000`
+4. Run backend: `cd backend/app && uvicorn main:app --reload --port 8000`
 5. Run frontend: `cd frontend && npm run dev`
 
 ## Architecture
