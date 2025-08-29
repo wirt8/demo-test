@@ -86,7 +86,7 @@ function HistoryChart({ data }: any) {
     toast.success(`Placed trade: ${selectedCategory}, ${leverage}x, size ${entrySize}`);
     const oldEntrySize = entrySize;
     setEntrySize(0);
-    // call api /orders/place
+
     fetch("http://localhost:8000/orders/place", {
       method: "POST",
       headers: {
@@ -112,7 +112,7 @@ function HistoryChart({ data }: any) {
             side: data?.trade_details?.side ?? selectedCategory,
             size: Number(data?.trade_details?.size ?? oldEntrySize ?? 0),
             leverage: Number(data?.trade_details?.leverage ?? leverage ?? 1),
-            notional_size: Number(data?.trade_details?.notional_size ?? oldEntrySize * leverage ?? 0),
+            notional_size: Number(data?.trade_details?.notional_size ?? oldEntrySize * leverage),
             mark_price: Number(data?.trade_details?.mark_price ?? 0),
             status: Object.keys(data?.hl_response?.response?.data?.statuses[0])[0].toString()
           };
@@ -336,33 +336,28 @@ function HistoryChart({ data }: any) {
                           className="text-xs text-blue-600 hover:underline"
                           onClick={async () => {
                             try {
-                              const res = await fetch("http://localhost:8000/health");
-                              const payload = await res.json();
-                              const extract = (pl: any): { oid?: string; status: Trade['status'] } => {
-                                try {
-                                  if (Array.isArray(pl) && pl.length > 0) {
-                                    const o = pl[0];
-                                    const oid = String(o?.order?.order?.oid ?? '');
-                                    const statusRaw = String(o?.order?.status ?? '').toLowerCase();
-                                    const status = statusRaw === 'open' ? 'resting' : (statusRaw === 'filled' ? 'filled' : (statusRaw === 'canceled' ? 'canceled' : 'unknown')) as Trade['status'];
-                                    return { oid, status };
-                                  }
-                                  const s = pl?.response?.data?.statuses?.[0];
-                                  if (!s) return { oid: undefined, status: 'unknown' } as const;
-                                  if (s.resting) return { oid: String(s.resting.oid), status: 'resting' } as const;
-                                  if (s.filled) return { oid: String(s.filled.oid ?? s.filled.order_id ?? ''), status: 'filled' } as const;
-                                  if (s.canceled) return { oid: String(s.canceled.oid ?? s.canceled.order_id ?? ''), status: 'canceled' } as const;
-                                  return { oid: undefined, status: 'unknown' } as const;
-                                } catch {
-                                  return { oid: undefined, status: 'unknown' } as const;
+                              const res = await fetch("http://localhost:8000/orders/status", {
+                                method: "POST",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                },
+                                body: JSON.stringify({ order_id: t.order_id })
+                              });
+                              if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                              const data = await res.json();
+                              
+                              if (data[0]?.status === 'order') {
+                                const newStatus = data[0]?.order?.status?.toLowerCase();
+                                if (newStatus) {
+                                  setTrades(prev => prev.map(x => 
+                                    x.order_id === t.order_id ? { ...x, status: newStatus } : x
+                                  ));
+                                  toast.success('Status updated');
+                                } else {
+                                  toast('No status update available', { icon: 'ℹ️' });
                                 }
-                              };
-                              const { oid, status } = extract(payload);
-                              if (oid && oid === t.order_id) {
-                                setTrades(prev => prev.map(x => x.order_id === t.order_id ? { ...x, status: status as Trade['status'] } : x));
-                                toast.success('Status updated');
                               } else {
-                                toast('No status update for this order', { icon: 'ℹ️' });
+                                toast.error(data.message || 'Failed to update status');
                               }
                             } catch (e) {
                               toast.error('Failed to refresh status');
@@ -371,7 +366,7 @@ function HistoryChart({ data }: any) {
                         >
                           Refresh
                         </button>
-                        {t.status === 'resting' && (
+                        {(t.status === 'resting' || t.status === 'open') && (
                           <button
                             className="text-xs text-red-600 hover:underline"
                             onClick={async () => {

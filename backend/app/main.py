@@ -55,6 +55,9 @@ class TradeResponse(BaseModel):
 
 class CancelOrderRequest(BaseModel):
     order_id: str
+    
+class StatusOrderRequest(BaseModel):
+    order_id: str
 
 # Init mock data
 MOCK_MARKET = ScalarMarket(
@@ -79,7 +82,6 @@ MOCK_MARKET = ScalarMarket(
 load_dotenv()
 private_key = os.getenv("PRIVATE_KEY")
 account_address = os.getenv("ACCOUNT_ADDRESS")
-current_oid = "" # for checking status
 logger.info(f"Private key: {private_key}")
 logger.info(f"Account address: {account_address}")
 try:
@@ -103,15 +105,20 @@ async def get_markets():
     return [MOCK_MARKET]
 
 @app.get("/health")
-async def get_order_status():
+async def health_check():
+    return {"status": "ok"}
+
+@app.post("/orders/status")
+async def get_order_status(status_request: StatusOrderRequest):
     try:
-        order_status = info.query_order_by_oid(account_address, current_oid)
+        order_status = info.query_order_by_oid(account_address, int(status_request.order_id))
+        logger.info(f"[HL] Order status: {order_status}")
         return [order_status]
     except Exception as e:
-        order_status = {'status': 'order', 'order': {'order': {'coin': 'ETH', 'side': 'B', 'limitPx': '1100.0', 'sz': '0.2', 'oid': 38218562569, 'timestamp': 1756430827231, 'triggerCondition': 'N/A', 'isTrigger': False, 'triggerPx': '0.0', 'children': [], 'isPositionTpsl': False, 'reduceOnly': False, 'orderType': 'Limit', 'origSz': '0.2', 'tif': 'Gtc', 'cloid': None}, 'status': 'open', 'statusTimestamp': 1756430827231}} # mock response
-        return [order_status]
-        # logger.error(f"Failed to get order status: {e}")
-        # return json.dumps({"error": str(e)})
+        # order_status = {'status': 'order', 'order': {'order': {'coin': 'ETH', 'side': 'B', 'limitPx': '1100.0', 'sz': '0.2', 'oid': 38218562569, 'timestamp': 1756430827231, 'triggerCondition': 'N/A', 'isTrigger': False, 'triggerPx': '0.0', 'children': [], 'isPositionTpsl': False, 'reduceOnly': False, 'orderType': 'Limit', 'origSz': '0.2', 'tif': 'Gtc', 'cloid': None}, 'status': 'open', 'statusTimestamp': 1756430827231}} # mock response
+        # return [order_status]
+        logger.error(f"Failed to get order status: {e}")
+        return json.dumps({"error": str(e)})
 
 def validate_trade(trade: TradeRequest, market: ScalarMarket) -> tuple[bool, str]:
     # Check max leverage
@@ -143,18 +150,17 @@ async def place_order(trade: TradeRequest):
     notional_size = trade.size * trade.leverage
     try:
         order_result = exchange.order("ETH", True, notional_size / 1000, 1100, {"limit": {"tif": "Gtc"}})
+        logger.info(f"[HL] Order result: {order_result}")
     except Exception as e:
-        order_result = {'status': 'ok', 'response': {'type': 'order', 'data': {'statuses': [{'resting': {'oid': 38218562569}}]}}} # mock response
-        # logger.error(f"Failed to place order: {e}")
-        # return TradeResponse(
-        #     success=False,
-        #     message="Failed to place order"
-        # )
+        # order_result = {'status': 'ok', 'response': {'type': 'order', 'data': {'statuses': [{'resting': {'oid': 38218562569}}]}}} # mock response
+        logger.error(f"Failed to place order: {e}")
+        return TradeResponse(
+            success=False,
+            message="Failed to place order"
+        )
     if (order_result["status"] == "ok"):
         status = order_result["response"]["data"]["statuses"][0]
         order_id = status["resting"]["oid"]
-        global current_oid
-        current_oid = order_id
         # if "resting" in status:
         #     order_status = info.query_order_by_oid(account_address, order_id)
             # print("Order status by oid:", order_status)  
@@ -197,10 +203,12 @@ async def place_order(trade: TradeRequest):
 @app.post("/orders/cancel")
 async def cancel_order(cancel_request: CancelOrderRequest):
     try:
-        logger.log(f"Cancel order: {cancel_request}")
-        cancel_result = exchange.cancel("ETH", cancel_request.order_id)
+        cancel_result = exchange.cancel("ETH", int(cancel_request.order_id))
+        logger.info(f"[HL] Cancel order: {cancel_request}")
     except Exception as e:
-        cancel_result = {'status': 'ok', 'response': {'type': 'cancel', 'data': {'statuses': ['success']}}} # mock response
+        # cancel_result = {'status': 'ok', 'response': {'type': 'cancel', 'data': {'statuses': ['success']}}} # mock response
+        logger.error(f"Failed to cancel order: {e}")
+        raise HTTPException(status_code=500, detail="Failed to cancel order")
     return [cancel_result]
 
 if __name__ == "__main__":
