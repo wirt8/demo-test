@@ -10,7 +10,9 @@
 - **Backend**: FastAPI with Hyperliquid SDK
 
 ## Demo
-![Demo](/demo/demo.mp4)
+<video src="https://player.vimeo.com/video/1114197353?h=1e65ea3132" controls width="600">
+  Your browser does not support the video tag.
+</video>
 
 BE Logs info when place trade success
 ![BE Logs info when place trade success](/demo/log-success.png)
